@@ -65,10 +65,18 @@ class FlutterExifRotationPlugin : FlutterPlugin, MethodCallHandler {
                 ExifInterface.ORIENTATION_NORMAL -> bitmap
                 else -> bitmap
             }
+
+            // Detect the input file format
+            val fileExtension = photoPath.substringAfterLast('.', "").toLowerCase()
+            val compressFormat = when (fileExtension) {
+                "png" -> Bitmap.CompressFormat.PNG
+                else -> Bitmap.CompressFormat.JPEG
+            }
+
             val file =
                 File(photoPath) // the File to save , append increasing numeric counter to prevent files from getting overwritten.
             val fOut = FileOutputStream(file)
-            rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, fOut)
+            rotatedBitmap.compress(compressFormat, 100, fOut)
             fOut.flush() // Not really required
             fOut.close() // do not forget to close the stream
             if (save) {
