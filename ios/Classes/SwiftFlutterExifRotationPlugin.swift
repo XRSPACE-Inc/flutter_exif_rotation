@@ -20,12 +20,27 @@ public class SwiftFlutterExifRotationPlugin: NSObject, FlutterPlugin {
             let image = UIImage(contentsOfFile: imagePath)
             
             if let updatedImage = image?.updateImageOrientationUpSide() {
-                
                 let fileManager = FileManager.default
                 let file_name = NSURL(fileURLWithPath: imagePath).lastPathComponent!
                 let paths = (NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as NSString).appendingPathComponent(file_name)
-                let imageData = updatedImage.jpegData(compressionQuality: 0.8); fileManager.createFile(atPath: paths as String, contents: imageData, attributes: nil)
-                result(paths as String)
+
+                // Detect the input file format
+                let fileExtension = (imagePath as NSString).pathExtension.lowercased()
+                let imageData: Data?
+
+                switch fileExtension {
+                case "png":
+                    imageData = updatedImage.pngData()
+                default:
+                    imageData = updatedImage.jpegData(compressionQuality: 1) // Default to JPEG
+                }
+
+                if let imageData = imageData {
+                    fileManager.createFile(atPath: paths, contents: imageData, attributes: nil)
+                    result(paths)
+                } else {
+                    result(FlutterError(code: "IMAGE_DATA_ERROR", message: "Failed to get image data", details: nil))
+                }
             } else {
                 result(imagePath)
             }
